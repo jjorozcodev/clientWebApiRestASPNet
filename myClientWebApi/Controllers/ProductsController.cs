@@ -62,5 +62,48 @@ namespace myClientWebApi.Controllers
             ModelState.AddModelError(string.Empty, "Error: Please, contact the administrator.");
             return View(product);
         }
+
+        public ActionResult Edit(int id)
+        {
+            Product product = null;
+
+            using(var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(BaseURL);
+
+                var responseTask = client.GetAsync("/api/products/" + id.ToString());
+                responseTask.Wait();
+
+                var result = responseTask.Result;
+                if (result.IsSuccessStatusCode)
+                {
+                    var readTask = result.Content.ReadAsAsync<Product>();
+                    readTask.Wait();
+                    product = readTask.Result;
+                }
+            }
+
+            return View(product);
+        }
+
+        [HttpPost]
+        public ActionResult Edit(Product product)
+        {
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(BaseURL);
+
+                var putTask = client.PutAsJsonAsync($"/api/products/{product.ProductID}", product);
+                putTask.Wait();
+
+                var result = putTask.Result;
+                if (result.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("Index");
+                }
+            }
+
+            return View(product);
+        }
     }
 }
